@@ -19,7 +19,7 @@ const IMAGE_MAP = [
   { match: 'iPhone 14', url: 'https://grest.in/cdn/shop/files/Frame_3_5.png?v=1775222416&width=3840' },
 
   // SAMSUNG
-  { match: 'Galaxy S24 Ultra', url: 'https://images.samsung.com/is/image/samsung/p6pim/in/2401/gallery/in-galaxy-s24-s928-sm-s928bzvqins-539573216?$650_519_PNG$' },
+  { match: 'Galaxy S24 Ultra', url: 'https://www.myg.in/images/thumbnails/300/300/detailed/74/1_koh3-3z-removebg-preview.png.png' },
   { match: 'Galaxy S24', url: 'https://static.vecteezy.com/system/resources/previews/041/329/788/non_2x/samsung-galaxy-s24-ultra-titanium-blue-back-view-free-png.png' },
 
   // VIVO
