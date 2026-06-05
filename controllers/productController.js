@@ -15,6 +15,7 @@ const getProducts = async (req, res, next) => {
       sort,
       search,
       keyword,
+      discount,
       page = 1,
       limit = 12,
     } = req.query;
@@ -53,6 +54,11 @@ const getProducts = async (req, res, next) => {
     // Filter by rating
     if (rating) {
       query.rating = { $gte: Number(rating) };
+    }
+
+    // Filter by discount
+    if (discount) {
+      query.discount = { $gte: Number(discount) };
     }
 
     // Search by name or brand
