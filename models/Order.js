@@ -97,4 +97,9 @@ orderSchema.pre('save', function (next) {
   next();
 });
 
+// Indexes for order lookups
+orderSchema.index({ user: 1, createdAt: -1 }); // getMyOrders: filter by user, sort newest
+orderSchema.index({ orderStatus: 1 });         // admin filter by status
+orderSchema.index({ createdAt: -1 });          // admin list + stats by date
+
 module.exports = mongoose.model('Order', orderSchema);

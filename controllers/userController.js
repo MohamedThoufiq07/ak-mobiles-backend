@@ -4,11 +4,26 @@ const User = require('../models/User');
 // @route   GET /api/users
 const getAllUsers = async (req, res, next) => {
   try {
-    const users = await User.find({ role: 'user' })
-      .select('-password')
-      .sort({ createdAt: -1 });
+    const pageNum = Number(req.query.page) || 1;
+    const limitNum = Number(req.query.limit) || 20;
+    const skip = (pageNum - 1) * limitNum;
 
-    res.status(200).json({ success: true, users });
+    const query = { role: 'user' };
+    const total = await User.countDocuments(query);
+    const users = await User.find(query)
+      .select('-password')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum)
+      .lean();
+
+    res.status(200).json({
+      success: true,
+      users,
+      page: pageNum,
+      pages: Math.ceil(total / limitNum),
+      total,
+    });
   } catch (error) {
     next(error);
   }

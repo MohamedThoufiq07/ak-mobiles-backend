@@ -84,6 +84,10 @@ const productSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    flashSale: {
+      type: Boolean,
+      default: false,
+    },
     numSold: {
       type: Number,
       default: 0,
@@ -106,5 +110,17 @@ productSchema.pre('save', function (next) {
 
 // Text index for search
 productSchema.index({ name: 'text', brand: 'text', description: 'text' });
+
+// Indexes for the storefront filters & sorts (getProducts) — these turn
+// full-collection scans into index lookups as the catalog grows.
+productSchema.index({ brand: 1 });
+productSchema.index({ category: 1 });
+productSchema.index({ offerPrice: 1 });   // price filter + price sort
+productSchema.index({ rating: -1 });      // rating filter + rating sort
+productSchema.index({ numSold: -1 });     // "popular" sort
+productSchema.index({ discount: -1 });    // discount filter
+productSchema.index({ createdAt: -1 });   // default "newest" sort
+productSchema.index({ isFeatured: 1 });   // featured products query
+productSchema.index({ flashSale: 1 });     // flash sale products query
 
 module.exports = mongoose.model('Product', productSchema);

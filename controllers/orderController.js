@@ -33,14 +33,17 @@ const createOrder = async (req, res, next) => {
       totalPrice,
     });
 
-    // Update stock and numSold for each product
-    for (const item of orderItems) {
-      const product = await Product.findById(item.product);
-      if (product) {
-        product.stock = Math.max(0, product.stock - item.quantity);
-        product.numSold += item.quantity;
-        await product.save();
-      }
+    // Update stock and numSold for all products in a single round-trip
+    const stockOps = orderItems.map((item) => ({
+      updateOne: {
+        filter: { _id: item.product },
+        update: { $inc: { stock: -item.quantity, numSold: item.quantity } },
+      },
+    }));
+    if (stockOps.length > 0) {
+      await Product.bulkWrite(stockOps);
+      // Clamp any stock that went negative back to 0
+      await Product.updateMany({ stock: { $lt: 0 } }, { $set: { stock: 0 } });
     }
 
     res.status(201).json({ success: true, order });

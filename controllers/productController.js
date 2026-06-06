@@ -1,4 +1,5 @@
 const Product = require('../models/Product');
+const cache = require('../utils/cache');
 
 // @desc    Get all products with filters, sorting, and pagination
 // @route   GET /api/products
@@ -16,6 +17,7 @@ const getProducts = async (req, res, next) => {
       search,
       keyword,
       discount,
+      flashSale,
       page = 1,
       limit = 12,
     } = req.query;
@@ -61,6 +63,11 @@ const getProducts = async (req, res, next) => {
       query.discount = { $gte: Number(discount) };
     }
 
+    // Flash sale products only
+    if (flashSale === 'true') {
+      query.flashSale = true;
+    }
+
     // Search by name or brand
     if (searchVal) {
       query.$or = [
@@ -99,7 +106,8 @@ const getProducts = async (req, res, next) => {
     const products = await Product.find(query)
       .sort(sortQuery)
       .skip(skip)
-      .limit(limitNum);
+      .limit(limitNum)
+      .lean();
 
     res.status(200).json({
       success: true,
@@ -134,7 +142,11 @@ const getProductById = async (req, res, next) => {
 // @route   GET /api/products/featured
 const getFeaturedProducts = async (req, res, next) => {
   try {
-    const products = await Product.find({ isFeatured: true }).limit(8);
+    let products = cache.get('products:featured');
+    if (!products) {
+      products = await Product.find({ isFeatured: true }).limit(8).lean();
+      cache.set('products:featured', products);
+    }
     res.status(200).json({ success: true, products });
   } catch (error) {
     next(error);
@@ -145,7 +157,11 @@ const getFeaturedProducts = async (req, res, next) => {
 // @route   GET /api/products/top
 const getTopProducts = async (req, res, next) => {
   try {
-    const products = await Product.find({}).sort({ rating: -1 }).limit(8);
+    let products = cache.get('products:top');
+    if (!products) {
+      products = await Product.find({}).sort({ rating: -1 }).limit(8).lean();
+      cache.set('products:top', products);
+    }
     res.status(200).json({ success: true, products });
   } catch (error) {
     next(error);
@@ -167,7 +183,9 @@ const getRelatedProducts = async (req, res, next) => {
     const related = await Product.find({
       _id: { $ne: product._id },
       $or: [{ brand: product.brand }, { category: product.category }],
-    }).limit(5);
+    })
+      .limit(5)
+      .lean();
 
     res.status(200).json({ success: true, products: related });
   } catch (error) {
@@ -180,6 +198,7 @@ const getRelatedProducts = async (req, res, next) => {
 const createProduct = async (req, res, next) => {
   try {
     const product = await Product.create(req.body);
+    cache.clear('products:');
     res.status(201).json({ success: true, product });
   } catch (error) {
     next(error);
@@ -200,6 +219,7 @@ const updateProduct = async (req, res, next) => {
         message: 'Product not found',
       });
     }
+    cache.clear('products:');
     res.status(200).json({ success: true, product });
   } catch (error) {
     next(error);
@@ -217,6 +237,7 @@ const deleteProduct = async (req, res, next) => {
         message: 'Product not found',
       });
     }
+    cache.clear('products:');
     res.status(200).json({ success: true, message: 'Product deleted' });
   } catch (error) {
     next(error);

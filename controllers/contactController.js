@@ -28,8 +28,24 @@ const submitContact = async (req, res, next) => {
 // @route   GET /api/contact
 const getContactMessages = async (req, res, next) => {
   try {
-    const messages = await Contact.find().sort({ createdAt: -1 });
-    res.status(200).json({ success: true, messages });
+    const pageNum = Number(req.query.page) || 1;
+    const limitNum = Number(req.query.limit) || 20;
+    const skip = (pageNum - 1) * limitNum;
+
+    const total = await Contact.countDocuments();
+    const messages = await Contact.find()
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum)
+      .lean();
+
+    res.status(200).json({
+      success: true,
+      messages,
+      page: pageNum,
+      pages: Math.ceil(total / limitNum),
+      total,
+    });
   } catch (error) {
     next(error);
   }
